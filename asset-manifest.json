@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/FitnessApp/static/css/main.8fc1f287.css",
+    "main.js": "/FitnessApp/static/js/main.ab03cf65.js",
+    "static/js/453.8ab44547.chunk.js": "/FitnessApp/static/js/453.8ab44547.chunk.js",
+    "static/media/Google_Logo.png": "/FitnessApp/static/media/Google_Logo.b31361249fb7518952ee.png",
+    "static/media/Apple_Logo.png": "/FitnessApp/static/media/Apple_Logo.d5e34e6f137b459c22a3.png",
+    "index.html": "/FitnessApp/index.html",
+    "main.8fc1f287.css.map": "/FitnessApp/static/css/main.8fc1f287.css.map",
+    "main.ab03cf65.js.map": "/FitnessApp/static/js/main.ab03cf65.js.map",
+    "453.8ab44547.chunk.js.map": "/FitnessApp/static/js/453.8ab44547.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8fc1f287.css",
+    "static/js/main.ab03cf65.js"
+  ]
+}
