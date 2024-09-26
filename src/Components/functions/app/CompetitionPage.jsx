@@ -8,17 +8,13 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const CompetitionPage = () => {
-  const [mode, setMode] = useState('workout'); // 'workout', 'exercise', or 'weight'
-  const [exerciseMode, setExerciseMode] = useState('reps'); // 'reps', 'weights', or 'both'
-  const [selectedSet, setSelectedSet] = useState('Set 1'); // Default to Set 1
-  const [allUsers, setAllUsers] = useState([]); // Track all users for selection
+  const [mode, setMode] = useState('workout'); // 'workout' or 'weight'
   const [selectedUsers, setSelectedUsers] = useState([]); // Track selected users
   const [workoutStats, setWorkoutStats] = useState({});
-  const [exerciseData, setExerciseData] = useState({});
   const [weightData, setWeightData] = useState({});
   const [labels, setLabels] = useState([]); // Labels for the chart (timestamps)
   const [datasets, setDatasets] = useState([]); // Data for the chart (Y-values)
-  const [availableExercises, setAvailableExercises] = useState([]); // Store all exercises for filtering
+  const [allUsers, setAllUsers] = useState([]); // Track all users for selection
 
   const db = getFirestore();
   const auth = getAuth();
@@ -34,81 +30,49 @@ const CompetitionPage = () => {
       setAllUsers(users);
     };
 
-    const fetchAvailableExercises = async () => {
-      const exerciseSnapshot = await getDocs(collection(db, 'Excersies'));
-      const exercises = exerciseSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAvailableExercises(exercises);
-    };
-
     fetchAllUsers();
-    fetchAvailableExercises();
   }, [db]);
 
-// Fetch user data (Workouts, Exercises, Weight) for selected users
-const fetchUserData = async (userId) => {
-  const userWorkoutStats = await getDocs(collection(db, 'Users', userId, 'WorkoutStats'));
-  const userExerciseData = await getDocs(collection(db, 'Users', userId, 'Tracker'));
-  const userWeightData = await getDocs(collection(db, 'Users', userId, 'Weight_Tracker')); // Updated to Weight_Tracker
+  // Fetch user data (Workouts, Weight) for selected users
+  const fetchUserData = async (userId) => {
+    const userWorkoutStats = await getDocs(collection(db, 'Users', userId, 'WorkoutStats'));
+    const userWeightData = await getDocs(collection(db, 'Users', userId, 'Weight_Tracker')); // Updated to Weight_Tracker
 
-  const workoutStats = userWorkoutStats.docs.map(doc => ({
-    workoutName: doc.id,
-    percentage: doc.data().Percentage,
-    timestamp: doc.data().Timestamp,
-  }));
+    const workoutStats = userWorkoutStats.docs.map(doc => ({
+      workoutName: doc.id,
+      percentage: doc.data().Percentage,
+      timestamp: doc.data().Timestamp,
+    }));
 
-  const exercises = userExerciseData.docs.map(doc => {
-    const exerciseSets = doc.data(); // This contains sets and their data
-    return {
-      exerciseId: doc.id,
-      sets: Object.keys(exerciseSets).map(setKey => ({
-        setName: setKey,
-        ...exerciseSets[setKey], // Contains Reps, Weights, and Time
-      })),
-    };
-  });
+    const weights = userWeightData.docs.map(doc => ({
+      date: doc.data().DateTracked ? doc.data().DateTracked : 'Unknown Date', // Use DateTracked field
+      weight: doc.data().Weight,
+    }));
 
-  const weights = userWeightData.docs.map(doc => ({
-    date: doc.data().DateTracked ? doc.data().DateTracked : 'Unknown Date', // Use DateTracked field
-    weight: doc.data().Weight,
-  }));
-
-  return { workoutStats, exercises, weights };
-};
-
-
+    return { workoutStats, weights };
+  };
 
   // Trigger data fetch when selected users change
   useEffect(() => {
     if (selectedUsers.length > 0) {
       const fetchDataForAllUsers = async () => {
         const allWorkoutData = {};
-        const allExerciseData = {};
         const allWeightData = {};
         const allLabels = new Set(); // Use a Set to avoid duplicates in labels
 
         const promises = selectedUsers.map(async (userId) => {
-          const { workoutStats, exercises, weights } = await fetchUserData(userId);
+          const { workoutStats, weights } = await fetchUserData(userId);
 
           allWorkoutData[userId] = workoutStats;
-          allExerciseData[userId] = exercises;
           allWeightData[userId] = weights;
 
           // Collect labels (timestamps) for X-axis
           workoutStats.forEach(stat => allLabels.add(new Date(stat.timestamp).toLocaleDateString()));
           weights.forEach(weight => allLabels.add(weight.date));
-
-          // For exercise data, add timestamps
-          exercises.forEach(exercise => {
-            exercise.sets.forEach(set => allLabels.add(new Date(set.Time).toLocaleDateString()));
-          });
         });
 
         await Promise.all(promises);
         setWorkoutStats(allWorkoutData);
-        setExerciseData(allExerciseData);
         setWeightData(allWeightData);
         setLabels(Array.from(allLabels).sort()); // Sort labels for X-axis
       };
@@ -117,7 +81,7 @@ const fetchUserData = async (userId) => {
     }
   }, [selectedUsers]);
 
-  // Prepare chart data based on the selected mode (workout, exercise, or weight)
+  // Prepare chart data based on the selected mode (workout or weight)
   useEffect(() => {
     const prepareChartData = () => {
       const datasets = [];
@@ -154,26 +118,6 @@ const fetchUserData = async (userId) => {
             spanGaps: true, // Allow for gaps in the data
           });
         });
-      } else if (mode === 'exercise') {
-        Object.keys(exerciseData).forEach((userId, index) => {
-          const userExercises = exerciseData[userId];
-          const selectedExercise = userExercises.find(ex => ex.exerciseId === availableExercises[0]?.id); // Example: Select first exercise
-
-          if (selectedExercise) {
-            const data = labels.map(label => {
-              const set = selectedExercise.sets.find(set => new Date(set.Time).toLocaleDateString() === label);
-              return set ? (exerciseMode === 'reps' ? set.Reps : set.Weights) : null; // Return reps or weights
-            });
-
-            datasets.push({
-              label: allUsers.find(user => user.id === userId)?.name || 'Unknown User',
-              data,
-              borderColor: `rgba(${(index * 50) % 255}, ${(index * 100) % 255}, ${(index * 150) % 255}, 1)`,
-              backgroundColor: `rgba(${(index * 50) % 255}, ${(index * 100) % 255}, ${(index * 150) % 255}, 0.2)`,
-              spanGaps: true, // Allow for gaps in the data
-            });
-          }
-        });
       }
 
       setDatasets(datasets);
@@ -182,7 +126,7 @@ const fetchUserData = async (userId) => {
     if (labels.length > 0) {
       prepareChartData();
     }
-  }, [labels, workoutStats, weightData, exerciseData, mode, exerciseMode]);
+  }, [labels, workoutStats, weightData, mode]);
 
   const handleUserSelection = (userId) => {
     setSelectedUsers(prevUsers =>
@@ -206,13 +150,13 @@ const fetchUserData = async (userId) => {
       },
       title: {
         display: true,
-        text: mode === 'workout' ? 'Workout Progress' : mode === 'weight' ? 'Weight Progress' : 'Exercise Progress',
+        text: mode === 'workout' ? 'Workout Progress' : 'Weight Progress',
       },
     },
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className=" bg-gray-50">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Competition Page</h2>
 
       {/* Mode Switch */}
@@ -222,12 +166,6 @@ const fetchUserData = async (userId) => {
           className={`mr-4 px-4 py-2 rounded-lg ${mode === 'workout' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
         >
           Workout
-        </button>
-        <button
-          onClick={() => handleModeChange('exercise')}
-          className={`mr-4 px-4 py-2 rounded-lg ${mode === 'exercise' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Exercise
         </button>
         <button
           onClick={() => handleModeChange('weight')}
@@ -252,15 +190,6 @@ const fetchUserData = async (userId) => {
           </div>
         ))}
       </div>
-
-      {/* Exercise Mode Switch */}
-      {mode === 'exercise' && (
-        <div className="mb-6">
-          <button onClick={() => setExerciseMode('reps')} className={`mr-4 px-4 py-2 rounded-lg ${exerciseMode === 'reps' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>Reps</button>
-          <button onClick={() => setExerciseMode('weights')} className={`mr-4 px-4 py-2 rounded-lg ${exerciseMode === 'weights' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>Weights</button>
-          <button onClick={() => setExerciseMode('both')} className={`px-4 py-2 rounded-lg ${exerciseMode === 'both' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>Both</button>
-        </div>
-      )}
 
       {/* Line Chart */}
       <div className="rounded-lg shadow-lg p-4 bg-white">

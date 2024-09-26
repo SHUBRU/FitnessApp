@@ -45,7 +45,7 @@ const ProgressGraph = () => {
     };
 
     const fetchAvailableExercises = async () => {
-      const exerciseSnapshot = await getDocs(collection(db, 'Excersies'));
+      const exerciseSnapshot = await getDocs(collection(db, 'Exercises'));
       const exercises = exerciseSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -60,7 +60,7 @@ const ProgressGraph = () => {
   // Fetch exercise data for the selected exercise and set
   const fetchExerciseData = async (exerciseId) => {
     const userId = auth.currentUser.uid;
-    const setRef = collection(db, 'Users', userId, 'Tracker', exerciseId, selectedSet);
+    const setRef = collection(db, 'Users', userId, 'ExerciseTracker', exerciseId, selectedSet);
     const setSnapshot = await getDocs(setRef);
 
     const fetchedRepsData = [];
@@ -198,7 +198,7 @@ const ProgressGraph = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 ">
+    <div className="  bg-gray-50 ">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Progress Graph</h2>
 
       {/* Mode Switch */}

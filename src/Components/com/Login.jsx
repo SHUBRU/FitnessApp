@@ -17,7 +17,6 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [hasJustLoggedIn, setHasJustLoggedIn] = useState(false);
 
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userName, setUserName] = useState("");
@@ -29,11 +28,10 @@ const Login = () => {
 
   console.log(auth?.currentUser?.email);
 
-
   //For seeing if you are logged in or not
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // Initialize loading state
-  
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
       if (loggedInUser) {
@@ -43,7 +41,7 @@ const Login = () => {
       }
       setLoading(false); // Set loading to false once everything is done
     });
-  
+
     return () => unsubscribe();
   }, []);
 
@@ -55,11 +53,12 @@ const Login = () => {
         if (!hasJustLoggedIn) {
           setHasJustLoggedIn(true);
           navigate("/dashboard");
-        }} else {
-          // If user logs out, reset the flag
-          setHasJustLoggedIn(false);
         }
-      });
+      } else {
+        // If user logs out, reset the flag
+        setHasJustLoggedIn(false);
+      }
+    });
 
     return () => unsubscribe();
   }, [navigate]);
@@ -106,7 +105,7 @@ const Login = () => {
 
   const signUp = async () => {
     if (termsAccepted) {
-      try { 
+      try {
         await createUserWithEmailAndPassword(auth, email, password);
         toggleLogin();
       } catch (err) {
@@ -136,49 +135,39 @@ const Login = () => {
   const Logout = async () => {
     try {
       await auth.signOut();
-      console.log('Successfully logged out');
+      console.log("Successfully logged out");
     } catch (error) {
-      console.error('An error occurred while logging out:', error);
+      console.error("An error occurred while logging out:", error);
     }
   };
-  
 
   return (
     <div>
+      <div className="flex justify-end p-4">
         {!user && (
           <>
-          <button
-          className="text-white bg-blue-500 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-4 py-2"
-          style={{ position: "absolute", top: "19%", right: "2%" }}
-          type="button"
-          onClick={toggleLogin}
-        >
-          Login
-        </button>
+            <button
+              className="text-white bg-blue-500 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-4 py-2"
+              onClick={toggleLogin}
+            >
+              Login
+            </button>
           </>
         )}
 
         {user && (
           <>
-          <button
-            className="text-white bg-green-500 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-bold rounded-lg text-sm px-4 py-2"
-            style={{ position: "absolute", top: "19%", right: "2%" }}
-            onClick={Logout}
-          >
-            Logout
-          </button>
+            <button
+              className="text-white bg-green-500 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-bold rounded-lg text-sm px-4 py-2"
+              onClick={Logout}
+            >
+              Logout
+            </button>
           </>
         )}
-        
+      </div>
 
-
-
-      <div
-        ref={loginRef}
-        className={`${
-          showLogin ? "opacity-100 scale-100" : "opacity-0 scale-95"
-        } transition-opacity transition-transform duration-300 ease-in-out`}
-      >
+      <div ref={loginRef}>
         {showLogin && (
           <div className="flex justify-center absolute">
             <div
@@ -189,8 +178,7 @@ const Login = () => {
               {/* Add a width or your choice */}
               <div className="flipper">
                 <div className="front">
-                  <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
+                  <div className="relative pl-3 sm:max-w-xl sm:mx-auto">
                     <div className="p-4 sm:p-8 md:p-12 w-full max-w-md bg-white rounded-lg shadow-lg relative z-10">
                       <div className="mb-6 text-center">
                         <h1 className="text-2xl font-semibold">

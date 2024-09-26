@@ -25,6 +25,9 @@ import WorkoutAnalyserPAge from './pages/WorkoutAnalyserPage';
 import Settings from './pages/Settings';
 import RaschidWinningFormula from './pages/RaschidWinningFormula';
 import WeightTrackerPage from './pages/WeightTrackerPage';
+import Login from './Components/com/Login';
+import ProgressGraph from './Components/functions/app/ProgressGraph';
+import CompetitionPage from './Components/functions/app/CompetitionPage';
 
 
 
@@ -74,7 +77,6 @@ const App = () => {
   return (
     <Router>
       <div>
-
         {/* Routes */}
         <Routes>
           <Route path="/" element={<Home />} />

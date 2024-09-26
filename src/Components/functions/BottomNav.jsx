@@ -5,7 +5,7 @@ import { Link } from "react-router-dom"; // Import Link component
 function BottomNav() {
   return (
     <div>
-      <div className="fixed bottom-0 left-0 right-0 bg-black text-white flex justify-around items-center h-16 shadow-md">
+      <div className="pb-8 fixed bottom-0 left-0 right-0 bg-black text-white flex justify-around items-center h-24 shadow-md">
         <div className="text-center">
           <div className="block text-white text-xl hover:text-yellow-300">
             <Link to="/dashboard">Home</Link>

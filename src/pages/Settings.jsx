@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import Login from '../Components/com/Login'; // Assuming this is the correct path
 
 const SettingsPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showLogin, setShowLogin] = useState(false); // To toggle login modal visibility
+  const [user, setUser] = useState(null); // User authentication state
+  const [loading, setLoading] = useState(true);
 
   // Scroll effect to toggle header shrinking
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -24,8 +24,28 @@ const SettingsPage = () => {
     window.history.back(); // Navigate to the previous page
   };
 
+  // Simulate login/logout
+  const toggleLoginModal = () => {
+    setShowLogin(!showLogin);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  // This useEffect simulates checking the authentication state
+  useEffect(() => {
+    const fakeAuthCheck = setTimeout(() => {
+      // Simulate a user being logged in
+      setUser({ name: 'John Doe' });
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(fakeAuthCheck);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-36">
       {/* Top Profile Section */}
       <div
         className={`w-full transition-all duration-300 ease-in-out bg-gradient-to-b from-black to-gray-800 p-8 ${
@@ -83,7 +103,7 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between text-gray-700">
               <div className="flex items-center space-x-3">
                 <i className="fas fa-sign-out-alt text-gray-500"></i>
-                <span>Log out of account</span>
+                <span> Log out of account</span>
               </div>
               <i className="fas fa-chevron-right text-gray-500"></i>
             </div>
@@ -128,6 +148,42 @@ const SettingsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Login/Logout Button at the bottom */}
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center">
+          {loading ? (
+            <p>Loading...</p>
+          ) : user ? (
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white py-2 px-6 rounded-full hover:bg-red-600"
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              onClick={toggleLoginModal}
+              className="bg-blue-500 text-white py-2 px-6 rounded-full hover:bg-blue-600"
+            >
+              Login
+            </button>
+          )}
+        </div>
+
+        {/* Render the Login modal when the user clicks the login button */}
+        {showLogin && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <Login /> {/* Render the Login component */}
+              <button
+                className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
+                onClick={toggleLoginModal}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

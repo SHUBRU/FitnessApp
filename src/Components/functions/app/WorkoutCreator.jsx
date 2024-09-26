@@ -6,8 +6,8 @@ import { getAuth } from 'firebase/auth';
 const CustomWorkoutCreator = () => {
   const [workoutName, setWorkoutName] = useState('');
   const [targetedMuscles, setTargetedMuscles] = useState([]);
-  const [selectedExcersies, setSelectedExcersies] = useState([]);
-  const [Excersies, setExcersies] = useState([]);
+  const [selectedExercises, setSelectedExercises] = useState([]);
+  const [Exercises, setExercises] = useState([]);
   const [muscleFilter, setMuscleFilter] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -16,17 +16,17 @@ const CustomWorkoutCreator = () => {
   const auth = getAuth();
   const userId = auth.currentUser ? auth.currentUser.uid : null; // Get current user's ID
 
-  // Fetch all available Excersies from the 'Excersies' collection
+  // Fetch all available Exercises from the 'Exercises' collection
   useEffect(() => {
-    const fetchExcersies = async () => {
-      const ExcersiesSnapshot = await getDocs(collection(db, 'Excersies'));
-      const ExcersiesList = ExcersiesSnapshot.docs.map((doc) => ({
+    const fetchExercises = async () => {
+      const ExercisesSnapshot = await getDocs(collection(db, 'Exercises'));
+      const ExercisesList = ExercisesSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setExcersies(ExcersiesList);
+      setExercises(ExercisesList);
     };
-    fetchExcersies();
+    fetchExercises();
   }, [db]);
 
   // Handle targeted muscle checkbox selection
@@ -39,22 +39,22 @@ const CustomWorkoutCreator = () => {
   };
 
   // Handle exercise checkbox selection
-  const handleExcersieselection = (exerciseId) => {
-    if (selectedExcersies.includes(exerciseId)) {
-      setSelectedExcersies(selectedExcersies.filter((id) => id !== exerciseId));
+  const handleExerciseselection = (exerciseId) => {
+    if (selectedExercises.includes(exerciseId)) {
+      setSelectedExercises(selectedExercises.filter((id) => id !== exerciseId));
     } else {
-      setSelectedExcersies([...selectedExcersies, exerciseId]);
+      setSelectedExercises([...selectedExercises, exerciseId]);
     }
   };
 
-  // Filter Excersies by selected muscle group
-  const filteredExcersies = muscleFilter
-    ? Excersies.filter((exercise) => exercise.Muscle === muscleFilter)
-    : Excersies;
+  // Filter Exercises by selected muscle group
+  const filteredExercises = muscleFilter
+    ? Exercises.filter((exercise) => exercise.Muscle === muscleFilter)
+    : Exercises;
 
   // Save workout to Firestore with workout name as document ID
   const saveWorkout = async () => {
-    if (!workoutName || !targetedMuscles.length || !selectedExcersies.length) {
+    if (!workoutName || !targetedMuscles.length || !selectedExercises.length) {
       setError('Please fill out all fields.');
       return;
     }
@@ -65,7 +65,7 @@ const CustomWorkoutCreator = () => {
       const workoutData = {
         workoutName,
         musclesTargeted: targetedMuscles,
-        Excersies: selectedExcersies, // Store exercise IDs
+        Exercises: selectedExercises, // Store exercise IDs
       };
 
       if (userId) {
@@ -75,7 +75,7 @@ const CustomWorkoutCreator = () => {
         setSuccess('Workout saved successfully!');
         setWorkoutName('');
         setTargetedMuscles([]);
-        setSelectedExcersies([]);
+        setSelectedExercises([]);
       } else {
         setError('User not authenticated. Please log in.');
       }
@@ -85,7 +85,7 @@ const CustomWorkoutCreator = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-64">
       <h2 className="text-2xl font-bold mb-4">Create New Custom Workout</h2>
 
       {/* Workout Name Input */}
@@ -121,19 +121,19 @@ const CustomWorkoutCreator = () => {
         </select>
       </div>
 
-      {/* Available Excersies (with checkboxes) */}
+      {/* Available Exercises (with checkboxes) */}
       <div className="mb-4">
-        <h3 className="text-lg font-medium">Select Excersies</h3>
-        {filteredExcersies.length === 0 ? (
-          <p>No Excersies available for this muscle group.</p>
+        <h3 className="text-lg font-medium">Select Exercises</h3>
+        {filteredExercises.length === 0 ? (
+          <p>No Exercises available for this muscle group.</p>
         ) : (
-          filteredExcersies.map((exercise) => (
+          filteredExercises.map((exercise) => (
             <div key={exercise.id} className="flex items-center">
               <input
                 type="checkbox"
                 value={exercise.id}
-                onChange={() => handleExcersieselection(exercise.id)}
-                checked={selectedExcersies.includes(exercise.id)}
+                onChange={() => handleExerciseselection(exercise.id)}
+                checked={selectedExercises.includes(exercise.id)}
                 className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
               />
               <label className="ml-2 text-sm text-gray-700">

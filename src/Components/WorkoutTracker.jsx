@@ -24,7 +24,7 @@ const WorkoutTracker = () => {
         setWorkout(workoutData);
 
         const initialExerciseData = {};
-        for (const exerciseId of workoutData.Excersies) {
+        for (const exerciseId of workoutData.Exercises) {
           const storedData = sessionStorage.getItem(`${workoutId}-${exerciseId}`);
 
           // Fetch last and best session data from Firestore
@@ -32,7 +32,7 @@ const WorkoutTracker = () => {
           const bestSessionData = await fetchSessionData(userId, exerciseId, 'best');
 
           // Log the fetched data for first exercise (Bench Press)
-          if (exerciseId === workoutData.Excersies[0]) {
+          if (exerciseId === workoutData.Exercises[0]) {
             console.log("Fetched data for Bench Press (first exercise):", {
               lastSessionData,
               bestSessionData
@@ -59,7 +59,7 @@ const WorkoutTracker = () => {
     };
 
     const fetchAvailableExercises = async () => {
-      const exercisesSnapshot = await getDocs(collection(db, 'Excersies'));
+      const exercisesSnapshot = await getDocs(collection(db, 'Exercises'));
       const exercisesList = exercisesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -75,7 +75,7 @@ const WorkoutTracker = () => {
   const fetchSessionData = async (userId, exerciseId, mode) => {
     const setsData = [];
     for (let i = 1; i <= 3; i++) {
-      const trackerRef = collection(db, 'Users', userId, 'Tracker', exerciseId, `Set ${i}`);
+      const trackerRef = collection(db, 'Users', userId, 'ExerciseTracker', exerciseId, `Set ${i}`);
       let sessionQuery;
 
       if (mode === 'last') {
@@ -140,47 +140,65 @@ const WorkoutTracker = () => {
     const userId = auth.currentUser.uid;
     const timestamp = new Date().toISOString();
     let betterThanBestCount = 0;
+    let worseCount = 0;
     let total = 0;
-
+  
     for (const exerciseId of Object.keys(exerciseData)) {
-      const exerciseRef = doc(db, 'Users', userId, 'Tracker', exerciseId);
-
+      const exerciseRef = doc(db, 'Users', userId, 'ExerciseTracker', exerciseId);
+  
       exerciseData[exerciseId].sets.forEach(async (set, index) => {
         total++;
         if (set.reps !== '' || set.weight !== '') {
           const setRef = collection(exerciseRef, `Set ${index + 1}`);
-
+  
           const setData = {
             Time: timestamp,
             Reps: set.reps,
             Weights: set.weight,
           };
-
-          if (set.weight > set.bestWeight || (set.weight === set.bestWeight && set.reps > set.bestReps)) {
+  
+          // Logic for improvement
+          if (set.weight > set.bestWeight) {
+            // More weight than last time = better, reps don't matter
             betterThanBestCount++;
+          } else if (set.weight === set.bestWeight && set.reps > set.bestReps) {
+            // Same weight, but more reps = better
+            betterThanBestCount++;
+          } else if (set.weight === set.bestWeight && set.reps === set.bestReps) {
+            // Same weight and same reps = same, no change
+          } else if (set.weight < set.bestWeight) {
+            // Less weight = worse, reps don't matter
+            worseCount++;
+          } else if (set.weight === set.bestWeight && set.reps < set.bestReps) {
+            // Same weight, but fewer reps = worse
+            worseCount++;
           }
-
+  
           await setDoc(doc(setRef), setData);
         }
       });
-
+  
       sessionStorage.removeItem(`${workoutId}-${exerciseId}`);
     }
-
+  
     const percentageBetter = Math.round((betterThanBestCount / total) * 100);
-
+    const percentageWorse = Math.round((worseCount / total) * 100);
+  
     // Correct Firestore reference with an even number of segments
-    const workoutStatsRef = doc(db, 'Users', userId, 'WorkoutStats', workout.workoutName);
-
-    // Now we store the timestamp and percentage inside the document
+    const workoutStatsRef = doc(db, 'Users', userId, 'WorkoutStats', workout.workoutName,  new Date().toISOString()); // Set a unique timestamp as document ID
+  
+    // Store the timestamp, percentage for better and worse inside the document
     await setDoc(workoutStatsRef, {
       Timestamp: timestamp,
-      Percentage: percentageBetter
+      PercentageBetter: percentageBetter,
+      PercentageWorse: percentageWorse
     });
-
-    alert(`${betterThanBestCount}/${total} sets were better than your best!`);
+  
+    alert(`Results: ${betterThanBestCount}/${total} sets were better, ${worseCount}/${total} sets were worse.`);
     navigate('/');
   };
+  
+
 
   if (!workout) {
     return <p>Loading workout...</p>;
