@@ -46,4 +46,7 @@
   "devDependencies": {
     "tailwindcss": "^3.4.10"
   }
+  "scripts": {
+  "build": "npm install --legacy-peer-deps && next build"
+}
 }
