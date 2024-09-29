@@ -6,7 +6,7 @@ const TrackerTopSection = () => {
       className="bg-gradient-to-b from-gray-700 to-gray-400 h-64 flex justify-center items-center shadow-lg"
     >
       {/* Centered Title */}
-      <h1 className="text-white font-bold text-3xl">What Ever It Takes</h1>
+      <h1 className="text-white font-bold text-3xl">Track Your Progress For Optimal Gains</h1>
     </div>
   );
 };
