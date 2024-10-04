@@ -4,7 +4,6 @@ permissions:
   checks: write
   contents: read
   pull-requests: write
-  id-token: write
 jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
@@ -13,13 +12,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./frontend  # Set the working directory to frontend
-
-      - name: Build the project
-        run: npm run build
-        working-directory: ./frontend  # Run the build command in the frontend folder
+      - name: Install Firebase Tools
+        run: npm install -g firebase-tools  # Install Firebase CLI
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -27,4 +21,3 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FITNESS_APP_C5282 }}
           projectId: fitness-app-c5282
-        working-directory: ./frontend  # Deploy from the frontend folder

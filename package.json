@@ -45,5 +45,10 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.10"
+  },
+  "overrides": {
+    "react-swipeable-views": {
+      "react": "^18.3.1"
+    }
   }
 }
