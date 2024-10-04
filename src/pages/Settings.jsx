@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import Login from '../Components/com/Login'; // Assuming this is the correct path
+import { auth } from '../config/firebase'; // Import Firebase auth
+import { useNavigate } from 'react-router-dom'; // To navigate after logout
 
 const SettingsPage = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [showLogin, setShowLogin] = useState(false); // To toggle login modal visibility
+  const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null); // User authentication state
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Scroll effect to toggle header shrinking
   useEffect(() => {
@@ -29,8 +31,27 @@ const SettingsPage = () => {
     setShowLogin(!showLogin);
   };
 
-  const handleLogout = () => {
-    setUser(null);
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
+      if (loggedInUser) {
+        setUser(loggedInUser);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate('/'); // Redirect to home after logout
+    } catch (error) {
+      console.error('Logout error: ', error);
+    }
   };
 
   // This useEffect simulates checking the authentication state
@@ -150,40 +171,20 @@ const SettingsPage = () => {
         </div>
 
         {/* Login/Logout Button at the bottom */}
-        <div className="fixed bottom-4 left-0 right-0 flex justify-center">
-          {loading ? (
-            <p>Loading...</p>
-          ) : user ? (
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white py-2 px-6 rounded-full hover:bg-red-600"
-            >
-              Logout
-            </button>
-          ) : (
-            <button
-              onClick={toggleLoginModal}
-              className="bg-blue-500 text-white py-2 px-6 rounded-full hover:bg-blue-600"
-            >
-              Login
-            </button>
-          )}
-        </div>
-
-        {/* Render the Login modal when the user clicks the login button */}
-        {showLogin && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <Login /> {/* Render the Login component */}
+        <div className="bg-white shadow-md rounded-xl p-6 mx-4 mb-6 pt-20">
+          <h3 className="text-lg font-semibold mb-4">Your account</h3>
+          {/* Logout Button */}
+          {!loading && user && (
+            <div className="text-center">
               <button
-                className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
-                onClick={toggleLoginModal}
+                onClick={handleLogout}
+                className="bg-red-500 text-white py-2 px-6 rounded-full hover:bg-red-600"
               >
-                Close
+                Logout
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

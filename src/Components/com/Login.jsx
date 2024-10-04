@@ -1,343 +1,165 @@
 import React, { useState, useEffect, useRef } from "react";
 import google from "./assets/Google_Logo.png";
 import apple from "./assets/Apple_Logo.png";
-import { Link } from "react-router-dom";
 import { auth, googleProvider } from "../../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { useNavigate } from "react-router-dom"; // Assuming you're using React Router for navigation
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [showLogin, setShowLogin] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [hasJustLoggedIn, setHasJustLoggedIn] = useState(false);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userName, setUserName] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate(); // Initialize the navigate function
-  const [error, setError] = useState(null);
-
-  console.log(auth?.currentUser?.email);
-
-  //For seeing if you are logged in or not
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Initialize loading state
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((loggedInUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (loggedInUser) => {
       if (loggedInUser) {
         setUser(loggedInUser);
+        navigate("/dashboard"); // Navigate to dashboard upon successful login
       } else {
         setUser(null);
       }
       setLoading(false); // Set loading to false once everything is done
     });
-
-    return () => unsubscribe();
-  }, []);
-
-  const loginRef = useRef();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (!hasJustLoggedIn) {
-          setHasJustLoggedIn(true);
-          navigate("/dashboard");
-        }
-      } else {
-        // If user logs out, reset the flag
-        setHasJustLoggedIn(false);
-      }
-    });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (loginRef.current && !loginRef.current.contains(event.target)) {
-        setShowLogin(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const toggleLogin = () => {
-    setShowLogin(!showLogin);
-  };
-
-  const toggleSignUp = () => {
-    setIsSignUp(!isSignUp);
-  };
+  const toggleSignUp = () => setIsSignUp(!isSignUp);
 
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      setIsLoggedIn(true);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const signIn = async () => {
+  const signIn = async (e) => {
+    e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toggleLogin();
-      setIsLoggedIn(true);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const signUp = async () => {
+  const signUp = async (e) => {
+    e.preventDefault();
     if (termsAccepted) {
       try {
         await createUserWithEmailAndPassword(auth, email, password);
-        toggleLogin();
       } catch (err) {
         console.error(err);
       }
-      setIsLoggedIn(true);
-    } else {
-      console.error("Terms and Conditions must be accepted to sign up.");
     }
   };
 
-  const login = async (event) => {
-    event.preventDefault(); // Prevent default form submission
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Handle successful login, e.g., show a success message or redirect the user.
-      setEmail(""); // Clear the email input field after successful login
-      setPassword(""); // Clear the password input field after successful login
-      setError(null); // Clear any previous errors
-      toggleLogin();
-    } catch (err) {
-      setError(err.message); // Set the error state to display the error message to the user.
-    }
-  };
-
-  const Logout = async () => {
-    try {
-      await auth.signOut();
-      console.log("Successfully logged out");
-    } catch (error) {
-      console.error("An error occurred while logging out:", error);
-    }
-  };
+  // If the user is logged in, do not show the login form
+  if (user) {
+    return null; // Hide the login form when the user is logged in
+  }
 
   return (
-    <div>
-      <div className="flex justify-end p-4">
-        {!user && (
-          <>
-            <button
-              className="text-white bg-blue-500 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-4 py-2"
-              onClick={toggleLogin}
-            >
-              Login
-            </button>
-          </>
-        )}
+    <div className="relative min-h-screen bg-gray-100 flex items-center justify-center">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center z-0"
+        style={{
+          backgroundImage: "url('/path-to-placeholder-image.jpg')",
+          filter: "blur(6px)",
+        }}
+      ></div>
 
-        {user && (
-          <>
-            <button
-              className="text-white bg-green-500 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-bold rounded-lg text-sm px-4 py-2"
-              onClick={Logout}
-            >
-              Logout
-            </button>
-          </>
-        )}
-      </div>
+      {/* Login Form */}
+      {!user && !loading && (
+        <div className="relative z-10 w-full max-w-sm bg-white p-6 rounded-lg shadow-lg mx-4">
+          <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </h1>
 
-      <div ref={loginRef}>
-        {showLogin && (
-          <div className="flex justify-center absolute">
-            <div
-              className={`relative py-3 sm:max-w-xl sm:mx-auto `}
-              style={{ width: "Auto" }}
+          {/* Social login buttons */}
+          <div className="flex justify-between gap-2 mb-6">
+            <button
+              className="flex items-center justify-center w-1/2 px-4 py-2 bg-gray-100 rounded-lg shadow hover:bg-gray-200 transition duration-300"
+              onClick={signInWithGoogle}
             >
-              {" "}
-              {/* Add a width or your choice */}
-              <div className="flipper">
-                <div className="front">
-                  <div className="relative pl-3 sm:max-w-xl sm:mx-auto">
-                    <div className="p-4 sm:p-8 md:p-12 w-full max-w-md bg-white rounded-lg shadow-lg relative z-10">
-                      <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-semibold">
-                          {isSignUp ? "Sign Up" : "Login"}
-                        </h1>
-                      </div>
-                      <div className="flex items-center justify-center space-x-4 mt-4">
-                        <button className="flex items-center py-2 px-4 text-sm uppercase rounded bg-white hover:bg-gray-100 text-indigo-500 border border-transparent hover:border-transparent hover:text-gray-700 shadow-md hover:shadow-lg font-medium transition transform hover:-translate-y-0.5">
-                          <img
-                            src={apple}
-                            alt="Apple"
-                            className="w-6 h-6 mr-2"
-                          />
-                          Apple
-                        </button>
-                        <button
-                          onClick={signInWithGoogle}
-                          className="flex items-center py-2 px-4 text-sm uppercase rounded bg-white hover:bg-gray-100 text-indigo-500 border border-transparent hover:border-transparent hover:text-gray-700 shadow-md hover:shadow-lg font-medium transition transform hover:-translate-y-0.5"
-                        >
-                          <img
-                            src={google}
-                            alt="Google"
-                            className="w-6 h-6 mr-2"
-                          />
-                          Google
-                        </button>
-                      </div>
-                      <div className="mt-6">
-                        <form>
-                          {isSignUp ? (
-                            <div className="back">
-                              <>
-                                <div className="mb-4">
-                                  <input
-                                    className="w-full px-3 py-2 text-sm leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                    type="text"
-                                    placeholder="User Name"
-                                    onChange={(e) =>
-                                      setUserName(e.target.value)
-                                    }
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    className="w-full px-3 py-2 text-sm leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                    type="email"
-                                    placeholder="Email"
-                                    onChange={(e) => setEmail(e.target.value)}
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    className="w-full px-3 py-2 text-sm leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                    type="password"
-                                    placeholder="Password"
-                                    onChange={(e) =>
-                                      setPassword(e.target.value)
-                                    }
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    type="checkbox"
-                                    className="mr-2"
-                                    onChange={(e) =>
-                                      setSubscribeNewsletter(e.target.checked)
-                                    }
-                                  />
-                                  <label>Subscribe to Newsletter</label>
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    type="checkbox"
-                                    className="mr-2"
-                                    onChange={(e) =>
-                                      setTermsAccepted(e.target.checked)
-                                    }
-                                  />
-                                  <label>Accept Terms and Conditions</label>
-                                </div>
-                                <div className="text-center">
-                                  <button
-                                    className="w-full px-4 py-2 font-bold text-white bg-blue-500 rounded-full hover:bg-blue-700 focus:outline-none focus:shadow-outline"
-                                    disabled={!termsAccepted}
-                                    onClick={signUp}
-                                  >
-                                    Sign Up
-                                  </button>
-                                </div>
-                              </>
-                            </div>
-                          ) : (
-                            <div className="front">
-                              <>
-                                <div className="mb-4">
-                                  <input
-                                    className="w-full px-3 py-2 text-sm leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                    id="username"
-                                    type="text"
-                                    placeholder="Email"
-                                    onChange={(e) => setEmail(e.target.value)}
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    className="w-full px-3 py-2 mb-1 text-sm leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                    id="password"
-                                    type="password"
-                                    placeholder="Password"
-                                    onChange={(e) =>
-                                      setPassword(e.target.value)
-                                    }
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <input
-                                    type="checkbox"
-                                    id="remember"
-                                    name="remember"
-                                    className="mr-2"
-                                  />
-                                  <label
-                                    htmlFor="remember"
-                                    className="text-sm text-gray-600"
-                                  >
-                                    Remember me
-                                  </label>
-                                </div>
-                                <div className="text-center">
-                                  <button
-                                    className="w-full py-2 px-4 text-white bg-indigo-500 rounded-md hover:bg-indigo-600 font-medium transition transform hover:-translate-y-0.5"
-                                    onClick={login} // Close login form on click
-                                  >
-                                    Sign in
-                                  </button>
-                                </div>
-                              </>
-                            </div>
-                          )}
-                          <div className="mt-4 text-center">
-                            <span
-                              className="text-sm text-blue-500 hover:text-blue-800 cursor-pointer"
-                              onClick={toggleSignUp}
-                            >
-                              {isSignUp
-                                ? "Already have an account? Login"
-                                : "Create an Account!"}
-                            </span>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <img src={google} alt="Google" className="w-6 h-6 mr-2" />
+              Google
+            </button>
+            <button className="flex items-center justify-center w-1/2 px-4 py-2 bg-gray-100 rounded-lg shadow hover:bg-gray-200 transition duration-300">
+              <img src={apple} alt="Apple" className="w-6 h-6 mr-2" />
+              Apple
+            </button>
           </div>
-        )}
-      </div>
+
+          {/* Form for email/password login */}
+          <form onSubmit={isSignUp ? signUp : signIn}>
+            {isSignUp && (
+              <input
+                className="w-full mb-4 px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                type="text"
+                placeholder="Username"
+                onChange={(e) => setUserName(e.target.value)}
+              />
+            )}
+            <input
+              className="w-full mb-4 px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              type="email"
+              placeholder="Email"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              className="w-full mb-4 px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              type="password"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            {isSignUp && (
+              <div className="mb-4">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                />
+                <label className="text-sm text-gray-600">
+                  Accept Terms and Conditions
+                </label>
+              </div>
+            )}
+
+            {/* Login or Sign Up button */}
+            <button
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300"
+              type="submit"
+              disabled={isSignUp && !termsAccepted}
+            >
+              {isSignUp ? "Sign Up" : "Sign In"}
+            </button>
+
+            {/* Toggle between Sign Up and Login */}
+            <div className="mt-4 text-center">
+              <span
+                className="text-sm text-blue-500 cursor-pointer"
+                onClick={toggleSignUp}
+              >
+                {isSignUp
+                  ? "Already have an account? Login"
+                  : "Create an Account!"}
+              </span>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
