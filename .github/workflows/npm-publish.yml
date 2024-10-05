@@ -12,10 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps --force
-
-      - name: Swipable install 
-        run: npm react-swipeable-views --force
+        run: npm install --force
 
 
       - name: Build the project
