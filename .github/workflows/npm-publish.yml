@@ -16,7 +16,7 @@ jobs:
 
 
       - name: Build the project
-        run: npm run build  # This creates the "build" folder
+        run: npm run build --force # This creates the "build" folder
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
